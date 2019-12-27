@@ -1,0 +1,19 @@
+{
+  "name": "contact-cli-server",
+  "version": "1.0.0",
+  "description": "Server for Contact CLI built in Python",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dev-sankhadip/ContactBook.git"
+  },
+  "author": "Sankhadip Samanta",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dev-sankhadip/ContactBook/issues"
+  },
+  "homepage": "https://github.com/dev-sankhadip/ContactBook#readme"
+}
