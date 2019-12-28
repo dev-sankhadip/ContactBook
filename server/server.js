@@ -7,7 +7,8 @@ const app=express();
 // set middlewares
 app.use(logger('dev'));
 app.use(cors());
-
+app.use(express.json())
+app.use(express.urlencoded({ extended:true }))
 
 // get all routes
 const { userRouter }=require('./routes/user');
