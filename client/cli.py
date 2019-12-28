@@ -1,9 +1,9 @@
 import click
-import keyring
 import requests
 import re
 import json
 from PyInquirer import style_from_dict,Token,Separator,prompt
+import configstore
 
 regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
 signup_url = 'http://localhost:2222/cli/signup'
@@ -49,10 +49,7 @@ def login(email, password):
         jsonResult = json.loads(result.text)
         code = jsonResult['code']
         if code==200:
-            try:
-                keyring.set_password('info',email, password)
-            except keyring.errors.PasswordSetError:
-                click.echo('Please login again')
+            print('Loggedin')
         elif code==401:
             click.echo('Wrong password')
         elif code==400:
@@ -63,9 +60,9 @@ def login(email, password):
         click.echo("Invalid email")
 
 
-# @main.command()
-# def get():
-#     click.echo(keyring.get_password('info','sankha@gmail.com'))
+@main.command()
+def get():
+    configstore.setUserConfig('1','2','3')
 
 if __name__ == "__main__":
     main()
