@@ -4,11 +4,15 @@ import re
 import json
 from PyInquirer import style_from_dict,Token,Separator,prompt
 import configstore
+from db import Database
+from texttable import Texttable
+
 
 regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
 signup_url = 'http://localhost:2222/cli/signup'
 login_url = 'http://localhost:2222/cli/login'
 
+db=Database('store.db')
 
 @click.group()
 def main():
@@ -59,10 +63,32 @@ def login(email, password):
     else:
         click.echo("Invalid email")
 
+@main.command()
+@click.option('--name', prompt="His/Her name", required=True, type=str)
+@click.option('--number', prompt="His/Her number", required=True, type=int)
+@click.option('--address', prompt="His/Her address", type=str, default='null')
+@click.option('--email', prompt="His/Her Email address", type=str, default='null')
+def create(name, number, address, email):
+    db.insertContact(name, number, address, email)
+
+@main.command()
+def read():
+    contacts = db.getContacts()
+    t = Texttable()
+    t.set_cols_dtype(['t','i','t','t'])
+    t.add_rows([['Name', 'Number','Address','Email']])
+    for contact in contacts:
+        t.add_row([contact[1], str(contact[2]), contact[3], contact[4]])
+    print(t.draw())
+
+@main.command()
+def set():
+    configstore.setUserConfig('1','2','3')
 
 @main.command()
 def get():
-    configstore.setUserConfig('1','2','3')
+    configData = configstore.getUserConfig()
+    print(configData)
 
 if __name__ == "__main__":
     main()

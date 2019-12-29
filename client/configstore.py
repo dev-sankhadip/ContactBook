@@ -16,5 +16,10 @@ def setUserConfig(userid, email, password):
         data2 = json.dumps(data)
         f.write(data2)
         f.close()
-def get(value):
-    print(value)
+def getUserConfig():
+    if platform.system()=='Linux':
+        configFilePath = expanduser('~')+'/.config/configstore/'
+        f = open(configFilePath+'info.json','r')
+        configData = json.load(f)
+        f.close()
+        return configData
