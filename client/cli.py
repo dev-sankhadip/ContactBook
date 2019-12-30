@@ -7,7 +7,7 @@ import configstore
 from db import Database
 from texttable import Texttable
 from PyInquirer import style_from_dict, Token, prompt
-from examples import custom_style_2
+from examples import custom_style_2, custom_style_1
 
 
 
@@ -76,13 +76,29 @@ def create(name, number, address, email):
 
 @main.command()
 def read():
-    contacts = db.getContacts()
-    t = Texttable()
-    t.set_cols_dtype(['i','t','i','t','t'])
-    t.add_rows([['id','Name', 'Number','Address','Email']])
-    for contact in contacts:
-        t.add_row([contact[0], contact[1], str(contact[2]), contact[3], contact[4]])
-    print(t.draw())
+    def printContacts(contacts):
+        t = Texttable()
+        t.set_cols_dtype(['i','t','i','t','t'])
+        t.add_rows([['id','Name', 'Number','Address','Email']])
+        for contact in contacts:
+            t.add_row([contact[0], contact[1], str(contact[2]), contact[3], contact[4]])
+        print(t.draw())
+    
+    questions = [
+        {
+            'type': 'confirm',
+            'message': 'Do you want to list in order by name?',
+            'name': 'sort',
+            'default': False,
+        },
+    ]
+    answers = prompt(questions, style=custom_style_1)
+    if answers['sort']==False:
+        contacts = db.getContacts()
+        printContacts(contacts)
+    else:
+        contacts = db.getContactsByNameSort()
+        printContacts(contacts)
 
 @main.command()
 @click.option('--id', prompt="Contact Id", required=True, type=int)

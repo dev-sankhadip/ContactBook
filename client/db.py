@@ -20,6 +20,11 @@ class Database:
         rows=self.cur.fetchall()
         return rows
     
+    def getContactsByNameSort(self):
+        self.cur.execute('select * from contact order by name')
+        rows = self.cur.fetchall()
+        return rows
+    
     def deleteContact(self, id):
         self.cur.execute('select * from contact where id = ?',(id,))
         rows=self.cur.fetchall()
