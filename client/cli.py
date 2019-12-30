@@ -6,6 +6,9 @@ from PyInquirer import style_from_dict,Token,Separator,prompt
 import configstore
 from db import Database
 from texttable import Texttable
+from PyInquirer import style_from_dict, Token, prompt
+from examples import custom_style_2
+
 
 
 regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
@@ -75,11 +78,61 @@ def create(name, number, address, email):
 def read():
     contacts = db.getContacts()
     t = Texttable()
-    t.set_cols_dtype(['t','i','t','t'])
-    t.add_rows([['Name', 'Number','Address','Email']])
+    t.set_cols_dtype(['i','t','i','t','t'])
+    t.add_rows([['id','Name', 'Number','Address','Email']])
     for contact in contacts:
-        t.add_row([contact[1], str(contact[2]), contact[3], contact[4]])
+        t.add_row([contact[0], contact[1], str(contact[2]), contact[3], contact[4]])
     print(t.draw())
+
+@main.command()
+@click.option('--id', prompt="Contact Id", required=True, type=int)
+def delete(id):
+    result = db.deleteContact(id)
+    print(result)
+
+@main.command()
+@click.option('--id', prompt="Contact id", required=True, type=int)
+def update(id):
+    result = db.getContact(id)
+    if result=='No contact found':
+        print('No contact found')
+    else:
+        data=result[0]
+        questions = [
+            {
+                'type': 'input',
+                'name': 'name',
+                'message': 'What\'s name',
+                'default':f"{data[1]}"
+            },
+            {
+                'type': 'input',
+                'name': 'number',
+                'message': 'What\'s phone number',
+                'default':f"{data[2]}"
+            },
+            {
+                'type': 'input',
+                'name': 'address',
+                'message': 'What\'s address',
+                'default':f"{data[3]}"
+            },
+            {
+                'type':'input',
+                'name':'email',
+                'message':'What\'s email',
+                'default':f"{data[4]}"
+            }
+        ]
+        answers = prompt(questions, style=custom_style_2)
+        res = db.updateContact(answers,id)
+        print(res)
+
+
+
+
+
+
 
 @main.command()
 def set():
