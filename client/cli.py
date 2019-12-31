@@ -2,31 +2,54 @@ import click
 import requests
 import re
 import json
-from PyInquirer import style_from_dict,Token,Separator,prompt
+from PyInquirer import prompt
 import configstore
+from operations import Operations
 from db import Database
 from texttable import Texttable
-from PyInquirer import style_from_dict, Token, prompt
 from examples import custom_style_2, custom_style_1
+import speech_recognition as sr
+import pyttsx3
 
 
+engine = pyttsx3.init('espeak')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
 
-regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
-signup_url = 'http://localhost:2222/cli/signup'
-login_url = 'http://localhost:2222/cli/login'
 
 # initialize database connection
 db=Database('store.db')
 
+#create operations object
+operation=Operations()
 
-# print contacts in tabular form in terminal
-def printContacts(contacts):
-        t = Texttable()
-        t.set_cols_dtype(['i','t','i','t','t'])
-        t.add_rows([['id','Name', 'Number','Address','Email']])
-        for contact in contacts:
-            t.add_row([contact[0], contact[1], str(contact[2]), contact[3], contact[4]])
-        print(t.draw())
+
+# any string passed to it, computer will speak
+def say(audio):
+    engine.say(audio)
+    engine.runAndWait()
+
+
+# take input from microphone and recognize contact operation command
+def recognizeCommand():
+    #It takes microphone input from the user and returns string output
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.pause_threshold = 1
+        audio = r.listen(source)
+
+    try:
+        print("Recognizing...")    
+        query = r.recognize_google(audio, language='en-in')
+        print(f"User said: {query}\n")
+
+    except Exception as e:
+        print(e)
+        print("Say that again please...")  
+        return "None"
+    return query
+
 
 
 # group all commands
@@ -35,25 +58,14 @@ def main():
     """Simple CLI tool for storing contacts in System"""
     pass
 
+
 # signup command
 @main.command()
 @click.option('--name', prompt='Your Name', required=True, type=str)
 @click.option('--email', prompt='Your Email', required=True, type=str)
 @click.option('--password', prompt='Your Password', required=True, type=str,hide_input=True, confirmation_prompt=True)
 def signup(name, email, password):
-    if re.search(regex,email):
-        if len(password)>6:
-            data = {
-                'name':name,
-                'email':email,
-                'password':password
-            }
-            result = requests.post(url=signup_url, data=data)
-            click.echo(result.text)
-        else:
-            click.echo('Password should be greater than 6 character')
-    else:
-        click.echo("Invalid email")
+    operation.signup(name, email, password)
 
 
 # login command
@@ -61,24 +73,7 @@ def signup(name, email, password):
 @click.option('--email', prompt='Your Email', required=True, type=str)
 @click.option('--password', prompt='Your Password',required=True, type=str, hide_input=True)
 def login(email, password):
-    if re.search(regex,email):
-        data = {
-            'email':email,
-            'password':password
-        }
-        result = requests.post(url=login_url,data=data)
-        jsonResult = json.loads(result.text)
-        code = jsonResult['code']
-        if code==200:
-            print('Loggedin')
-        elif code==401:
-            click.echo('Wrong password')
-        elif code==400:
-            click.echo('User not found')
-        else:
-            click.echo('Server error')
-    else:
-        click.echo("Invalid email")
+    operation.login(email, password)
 
 
 # contact create contact
@@ -88,96 +83,48 @@ def login(email, password):
 @click.option('--address', prompt="His/Her address", type=str, default='null')
 @click.option('--email', prompt="His/Her Email address", type=str, default='null')
 def create(name, number, address, email):
-    db.insertContact(name, number, address, email)
+    operation.create(name, number, address, email)
 
 
 # all contact read command
 @main.command()
 def read():
-    questions = [
-        {
-            'type': 'confirm',
-            'message': 'Do you want to list in order by name?',
-            'name': 'sort',
-            'default': False,
-        },
-    ]
-    answers = prompt(questions, style=custom_style_1)
-    if answers['sort']==False:
-        contacts = db.getContacts()
-        printContacts(contacts)
-    else:
-        contacts = db.getContactsByNameSort()
-        printContacts(contacts)
+    operation.read()
 
 
 # contact delete command
 @main.command()
 @click.option('--id', prompt="Contact Id", required=True, type=int)
 def delete(id):
-    result = db.deleteContact(id)
-    print(result)
+    operation.delete(id)
 
 
 # contact update command
 @main.command()
 @click.option('--id', prompt="Contact id", required=True, type=int)
 def update(id):
-    result = db.getContact(id)
-    if result=='No contact found':
-        print('No contact found')
-    else:
-        data=result[0]
-        questions = [
-            {
-                'type': 'input',
-                'name': 'name',
-                'message': 'What\'s name',
-                'default':f"{data[1]}"
-            },
-            {
-                'type': 'input',
-                'name': 'number',
-                'message': 'What\'s phone number',
-                'default':f"{data[2]}"
-            },
-            {
-                'type': 'input',
-                'name': 'address',
-                'message': 'What\'s address',
-                'default':f"{data[3]}"
-            },
-            {
-                'type':'input',
-                'name':'email',
-                'message':'What\'s email',
-                'default':f"{data[4]}"
-            }
-        ]
-        answers = prompt(questions, style=custom_style_2)
-        res = db.updateContact(answers,id)
-        print(res)
+    operation.update(id)
 
 
 # contact search command
 @main.command()
 @click.option('--keyword', prompt="Type contact keyword",required=True, type=str)
 def search(keyword):
-    result=db.searchContact(keyword)
-    if result=="No contact found":
-        print("No contact found")
+    operation.search(keyword)
+
+# contacts operation by speech recognition
+@main.command()
+def speak():
+    command = recognizeCommand().lower()
+    if command=='search':
+        print(command)
+    elif command=='delete':
+        print(command)
+    elif command=='read':
+        print(command)
     else:
-        printContacts(result)
+        print(command)
 
-
-@main.command()
-def set():
-    configstore.setUserConfig('1','2','3')
-
-@main.command()
-def get():
-    configData = configstore.getUserConfig()
-    print(configData)
 
 if __name__ == "__main__":
     main()
