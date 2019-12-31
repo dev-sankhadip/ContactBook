@@ -15,13 +15,27 @@ regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
 signup_url = 'http://localhost:2222/cli/signup'
 login_url = 'http://localhost:2222/cli/login'
 
+# initialize database connection
 db=Database('store.db')
 
+
+# print contacts in tabular form in terminal
+def printContacts(contacts):
+        t = Texttable()
+        t.set_cols_dtype(['i','t','i','t','t'])
+        t.add_rows([['id','Name', 'Number','Address','Email']])
+        for contact in contacts:
+            t.add_row([contact[0], contact[1], str(contact[2]), contact[3], contact[4]])
+        print(t.draw())
+
+
+# group all commands
 @click.group()
 def main():
     """Simple CLI tool for storing contacts in System"""
     pass
 
+# signup command
 @main.command()
 @click.option('--name', prompt='Your Name', required=True, type=str)
 @click.option('--email', prompt='Your Email', required=True, type=str)
@@ -42,7 +56,7 @@ def signup(name, email, password):
         click.echo("Invalid email")
 
 
-
+# login command
 @main.command()
 @click.option('--email', prompt='Your Email', required=True, type=str)
 @click.option('--password', prompt='Your Password',required=True, type=str, hide_input=True)
@@ -66,6 +80,8 @@ def login(email, password):
     else:
         click.echo("Invalid email")
 
+
+# contact create contact
 @main.command()
 @click.option('--name', prompt="His/Her name", required=True, type=str)
 @click.option('--number', prompt="His/Her number", required=True, type=int)
@@ -74,16 +90,10 @@ def login(email, password):
 def create(name, number, address, email):
     db.insertContact(name, number, address, email)
 
+
+# all contact read command
 @main.command()
 def read():
-    def printContacts(contacts):
-        t = Texttable()
-        t.set_cols_dtype(['i','t','i','t','t'])
-        t.add_rows([['id','Name', 'Number','Address','Email']])
-        for contact in contacts:
-            t.add_row([contact[0], contact[1], str(contact[2]), contact[3], contact[4]])
-        print(t.draw())
-    
     questions = [
         {
             'type': 'confirm',
@@ -100,12 +110,16 @@ def read():
         contacts = db.getContactsByNameSort()
         printContacts(contacts)
 
+
+# contact delete command
 @main.command()
 @click.option('--id', prompt="Contact Id", required=True, type=int)
 def delete(id):
     result = db.deleteContact(id)
     print(result)
 
+
+# contact update command
 @main.command()
 @click.option('--id', prompt="Contact id", required=True, type=int)
 def update(id):
@@ -145,9 +159,15 @@ def update(id):
         print(res)
 
 
-
-
-
+# contact search command
+@main.command()
+@click.option('--keyword', prompt="Type contact keyword",required=True, type=str)
+def search(keyword):
+    result=db.searchContact(keyword)
+    if result=="No contact found":
+        print("No contact found")
+    else:
+        printContacts(result)
 
 
 @main.command()
