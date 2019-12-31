@@ -1,13 +1,6 @@
 import click
-import requests
-import re
-import json
-from PyInquirer import prompt
-import configstore
 from operations import Operations
 from db import Database
-from texttable import Texttable
-from examples import custom_style_2, custom_style_1
 import speech_recognition as sr
 import pyttsx3
 
