@@ -7,6 +7,14 @@ from db import Database
 from texttable import Texttable
 from examples import custom_style_2, custom_style_1
 import click
+import speech_recognition as sr
+import pyttsx3
+
+
+engine = pyttsx3.init('espeak')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+
 
 regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
 signup_url = 'http://localhost:2222/cli/signup'
@@ -127,4 +135,70 @@ class Operations:
             print("No contact found")
         else:
             self.printContacts(result)
+
+
+operationsObject = Operations()
+
+class SpeechOperations:
+
+    # any string passed to it, computer will speak
+    def say(self,audio):
+        engine.say(audio)
+        engine.runAndWait()
     
+
+    def recognizeCommand(self):
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            print("Listening...")
+            r.pause_threshold = 1
+            audio = r.listen(source)
+
+        try:
+            print("Recognizing...")    
+            query = r.recognize_google(audio, language='en-in')
+            print(f"You said: {query}\n")
+
+        except Exception as e:
+            print(e)
+            print("Say that again please...")  
+            return "None"
+        return query
+
+
+    def search(self):
+        lines = "Say contact keyword"
+        self.say(lines)
+        keyword = self.recognizeCommand()
+        if keyword.isalpha()==True:
+            result=db.searchContact(keyword)
+            if result=="No contact found":
+                self.say(result)
+            else:
+                operationsObject.printContacts(result)
+        else:
+            print("Not recognized, please say again")
+            self.search()
+    
+    def delete(self):
+        lines = "Say contact id"
+        self.say(lines)
+        id = self.recognizeCommand()
+        if id.isdigit()==True:
+            result = db.deleteContact(id)
+            self.say(result)
+        else:
+            print("Not recognized, please say again")
+            self.delete()
+    
+    def read(self):
+        lines = "Do you want to list in order by name"
+        print(lines)
+        self.say(lines)
+        ans = self.recognizeCommand().lower()
+        if ans=="yes":
+            contacts = db.getContacts()
+            operationsObject.printContacts(contacts)
+        else:
+            contacts = db.getContactsByNameSort()
+            operationsObject.printContacts(contacts)

@@ -1,5 +1,5 @@
 import click
-from operations import Operations
+from operations import Operations, SpeechOperations
 from db import Database
 import speech_recognition as sr
 import pyttsx3
@@ -15,7 +15,7 @@ db=Database('store.db')
 
 #create operations object
 operation=Operations()
-
+speechOperation=SpeechOperations()
 
 # any string passed to it, computer will speak
 def say(audio):
@@ -107,17 +107,17 @@ def search(keyword):
 
 # contacts operation by speech recognition
 @main.command()
-def speak():
+@click.pass_context
+def speak(ctx):
     command = recognizeCommand().lower()
     if command=='search':
-        print(command)
+        speechOperation.search()
     elif command=='delete':
-        print(command)
+        speechOperation.delete()
     elif command=='read':
-        print(command)
+        speechOperation.read()
     else:
-        print(command)
-
+        ctx.forward(speak)
 
 if __name__ == "__main__":
     main()
