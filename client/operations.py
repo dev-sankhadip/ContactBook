@@ -9,6 +9,7 @@ from examples import custom_style_2, custom_style_1
 import click
 import speech_recognition as sr
 import pyttsx3
+import os
 
 
 engine = pyttsx3.init('espeak')
@@ -19,6 +20,7 @@ engine.setProperty('voice', voices[0].id)
 regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
 signup_url = 'http://localhost:2222/cli/signup'
 login_url = 'http://localhost:2222/cli/login'
+backup_url = 'http://localhost:2222/cli/backup'
 
 # initialize database connection
 db=Database('store.db')
@@ -135,6 +137,17 @@ class Operations:
             print("No contact found")
         else:
             self.printContacts(result)
+    
+    def backup(self):
+        contactDB = open('store.db','rb')
+        res = os.system('curl \
+            -F "userid=1" \
+            -F "filecomment=This is an image file" \
+            -F "image=@store.db" \
+            localhost:2222/cli/backup')
+        contactDB.close()
+        print(res)
+        
 
 
 operationsObject = Operations()

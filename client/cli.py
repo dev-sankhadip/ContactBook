@@ -105,6 +105,10 @@ def update(id):
 def search(keyword):
     operation.search(keyword)
 
+@main.command()
+def backup():
+    operation.backup()
+
 # contacts operation by speech recognition
 @main.command()
 @click.pass_context

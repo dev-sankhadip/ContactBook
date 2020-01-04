@@ -1,6 +1,10 @@
 const userRouter=require('express').Router();
 const shortId=require('shortid');
+const fileUpload=require('express-fileupload');
 const { connection }=require('../db/db');
+
+
+userRouter.use(fileUpload())
 
 userRouter.post('/signup', function(request, response)
 {
@@ -45,6 +49,16 @@ userRouter.post('/login', function(request, response)
             response.status(400).send({ code:400 })
         }
     })
+})
+
+userRouter.post('/backup', function(request, response)
+{
+    console.log(request.files);
+    if(request.files){
+        response.send({ code:200 })
+    }else{
+        response.send({ code:500 })
+    }
 })
 
 module.exports={
