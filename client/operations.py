@@ -2,7 +2,7 @@ import requests
 import re
 import json
 from PyInquirer import prompt
-import configstore
+from configstore import getUserConfig,setUserConfig
 from db import Database
 from texttable import Texttable
 from examples import custom_style_2, custom_style_1
@@ -22,11 +22,14 @@ signup_url = 'http://localhost:2222/cli/signup'
 login_url = 'http://localhost:2222/cli/login'
 backup_url = 'http://localhost:2222/cli/backup'
 
+
+
 # initialize database connection
 db=Database('store.db')
 
-class Operations:
 
+
+class Operations:
     # print contacts in tabular form in terminal
     def printContacts(self,contacts):
         t = Texttable()
@@ -139,9 +142,16 @@ class Operations:
             self.printContacts(result)
     
     def backup(self):
+        # get user credentials
+        userid=getUserConfig()['userid']
+        email=getUserConfig()['email']
+        password=getUserConfig()['password']
+
         contactDB = open('store.db','rb')
-        res = os.system('curl \
-            -F "userid=1" \
+        res = os.system(f'curl \
+            -F "userid={userid}" \
+            -F "email={email}" \
+            -F "password={password}" \
             -F "filecomment=This is an image file" \
             -F "image=@store.db" \
             localhost:2222/cli/backup')
@@ -152,8 +162,9 @@ class Operations:
 
 operationsObject = Operations()
 
-class SpeechOperations:
 
+
+class SpeechOperations:
     # any string passed to it, computer will speak
     def say(self,audio):
         engine.say(audio)
